@@ -192,4 +192,30 @@ class ImpossibleQuiz:
             bg=self.colors['baby_power'],
             fg=self.colors['fire_engine_red']
         )
-        self.timer_label.pack(pady=5) 
+        self.timer_label.pack(pady=5)
+    
+    def show_next_question(self):
+        if not self.questions:
+            messagebox.showinfo("Congratulations!", "You've completed all questions!")
+            self.root.quit()
+            return
+        
+        # Reset timer if it exists
+        if self.bomb_timer:
+            self.root.after_cancel(self.bomb_timer)
+            self.bomb_timer = None
+            self.timer_label.config(text="")
+        
+        # Select random question
+        self.current_question = random.choice(self.questions)
+        self.questions.remove(self.current_question)
+        
+        # Update interface
+        self.question_label.config(text=self.current_question['question'])
+        
+        for choice, button in self.answer_buttons.items():
+            button.config(text=self.current_question['choices'][choice])
+        
+        # Set bomb timer for some questions (20% chance)
+        if random.random() < 0.2:
+            self.start_bomb_timer()
