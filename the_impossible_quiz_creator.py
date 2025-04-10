@@ -199,3 +199,54 @@ class ImpossibleQuizCreator:
             fg=self.colors['baby_power']
         )
         github_button.pack(side='left', padx=10)
+    
+    def show_instructions(self):
+        instructions = """
+INSTRUCTIONS:
+Enter your quiz questions and answers carefully.
+Each question must have exactly 4 choices (a, b, c, d).
+Select the correct answer for each question.
+Click 'Save Question' to save your question.
+Continue adding questions until you're done.
+        """
+        messagebox.showinfo("Instructions", instructions)
+    
+    def open_github(self):
+        webbrowser.open("https://github.com/IsrafilMatter")
+    
+    def save_question(self):
+        username = self.username_entry.get()
+        question = self.question_entry.get("1.0", tk.END).strip()
+        answers = {k: v.get() for k, v in self.answer_entries.items()}
+        correct = self.correct_answer.get()
+        
+        if not all([username, question, all(answers.values()), correct]):
+            messagebox.showerror("Error", "Please fill in all fields!")
+            return
+        
+        # Save to file
+        with open("quiz_data.txt", "a") as f:
+            f.write(f"Q: {question}\n")
+            for choice, answer in answers.items():
+                f.write(f"{choice.upper()}: {answer}\n")
+            f.write(f"ANSWER: {correct}\n")
+            f.write("---\n")
+        
+        # Clear fields
+        self.question_entry.delete("1.0", tk.END)
+        for entry in self.answer_entries.values():
+            entry.delete(0, tk.END)
+        self.correct_answer.set("")
+        
+        # Ask if user wants to continue
+        if messagebox.askyesno("Continue?", "Do you want to add another question?"):
+            self.question_entry.focus()
+        else:
+            self.root.quit()
+
+    def run(self):
+        self.root.mainloop()
+
+if __name__ == "__main__":
+    app = ImpossibleQuizCreator()
+    app.run()
