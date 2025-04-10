@@ -232,3 +232,16 @@ class ImpossibleQuiz:
         else:
             self.play_sound('explosion')
             self.lose_life("Time's up!")
+    
+    def check_answer(self, choice):
+        if self.bomb_timer:
+            self.root.after_cancel(self.bomb_timer)
+            self.bomb_timer = None
+            self.timer_label.config(text="")
+        
+        if choice.upper() == self.current_question['correct'].upper():
+            self.play_sound('ding')
+            self.show_next_question()
+        else:
+            self.play_sound('explosion')
+            self.lose_life("Wrong answer!")
