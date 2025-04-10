@@ -100,3 +100,96 @@ class ImpossibleQuiz:
         except FileNotFoundError:
             messagebox.showerror("Error", "No questions found! Please create some questions first.")
             self.root.quit()
+    
+    def start_game(self):
+        # Play fart sound
+        self.play_sound('fart')
+        
+        # Hide start button and show game
+        self.start_button.pack_forget()
+        self.game_frame.pack(expand=True, fill='both')
+        
+        # Create game interface
+        self.create_game_interface()
+        
+        # Show first question
+        self.show_next_question()
+    
+    def create_game_interface(self):
+        # Status frame
+        status_frame = tk.Frame(self.game_frame, bg=self.colors['baby_power'])
+        status_frame.pack(fill='x', pady=10)
+        
+        # Lives
+        self.lives_label = tk.Label(
+            status_frame,
+            text=f"Lives: {'❤' * self.lives}",
+            font=('Comica', 12),
+            bg=self.colors['baby_power'],
+            fg=self.colors['fire_engine_red']
+        )
+        self.lives_label.pack(side='left', padx=10)
+        
+        # Skips
+        self.skips_label = tk.Label(
+            status_frame,
+            text=f"Skips: {self.skips}",
+            font=('Comica', 12),
+            bg=self.colors['baby_power'],
+            fg=self.colors['lapis_lazuli']
+        )
+        self.skips_label.pack(side='right', padx=10)
+        
+        # Question frame
+        self.question_frame = tk.Frame(self.game_frame, bg=self.colors['baby_power'])
+        self.question_frame.pack(pady=20)
+        
+        self.question_label = tk.Label(
+            self.question_frame,
+            text="",
+            font=('Comica', 14),
+            bg=self.colors['baby_power'],
+            fg=self.colors['raisin_black'],
+            wraplength=600
+        )
+        self.question_label.pack(pady=10)
+        
+        # Answers frame
+        self.answers_frame = tk.Frame(self.game_frame, bg=self.colors['baby_power'])
+        self.answers_frame.pack(pady=20)
+        
+        # Create answer buttons
+        self.answer_buttons = {}
+        for choice in ['A', 'B', 'C', 'D']:
+            btn = tk.Button(
+                self.answers_frame,
+                text="",
+                font=('Comica', 12),
+                bg=self.colors['school_bus_yellow'],
+                fg=self.colors['raisin_black'],
+                width=40,
+                command=lambda c=choice: self.check_answer(c)
+            )
+            btn.pack(pady=5)
+            self.answer_buttons[choice] = btn
+        
+        # Skip button
+        self.skip_button = tk.Button(
+            self.game_frame,
+            text="Skip",
+            command=self.skip_question,
+            font=('Comica', 12),
+            bg=self.colors['lapis_lazuli'],
+            fg=self.colors['baby_power']
+        )
+        self.skip_button.pack(pady=10)
+        
+        # Timer label (for bomb questions)
+        self.timer_label = tk.Label(
+            self.game_frame,
+            text="",
+            font=('Comica', 16, 'bold'),
+            bg=self.colors['baby_power'],
+            fg=self.colors['fire_engine_red']
+        )
+        self.timer_label.pack(pady=5) 
