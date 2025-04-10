@@ -1,0 +1,14 @@
+Q: 1+1
+A: 21
+B: 2
+C: 11
+D: window
+ANSWER: b
+---
+Q: Is programming cool?
+A: Yes
+B: heck yeah
+C: Great
+D: All of the above
+ANSWER: d
+---
