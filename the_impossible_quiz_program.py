@@ -245,3 +245,15 @@ class ImpossibleQuiz:
         else:
             self.play_sound('explosion')
             self.lose_life("Wrong answer!")
+    
+    def lose_life(self, message):
+        self.lives -= 1
+        self.lives_label.config(text=f"Lives: {'❤' * self.lives}")
+        
+        if self.lives <= 0:
+            if messagebox.askyesno("Game Over", f"{message}\nGame Over! Would you like to try again?"):
+                self.reset_game()
+            else:
+                self.root.quit()
+        else:
+            messagebox.showinfo("Oops!", f"{message}\nLives remaining: {self.lives}")
