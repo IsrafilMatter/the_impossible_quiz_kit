@@ -257,3 +257,33 @@ class ImpossibleQuiz:
                 self.root.quit()
         else:
             messagebox.showinfo("Oops!", f"{message}\nLives remaining: {self.lives}")
+    
+    def skip_question(self):
+        if self.skips > 0:
+            self.skips -= 1
+            self.skips_label.config(text=f"Skips: {self.skips}")
+            self.show_next_question()
+        else:
+            messagebox.showinfo("No Skips", "You have no skips remaining!")
+    
+    def reset_game(self):
+        self.lives = 3
+        self.skips = 3
+        self.load_questions()
+        self.lives_label.config(text=f"Lives: {'❤' * self.lives}")
+        self.skips_label.config(text=f"Skips: {self.skips}")
+        self.show_next_question()
+    
+    def play_sound(self, sound_name):
+        try:
+            pygame.mixer.music.load(self.sound_files[sound_name])
+            pygame.mixer.music.play()
+        except:
+            pass  # Silently fail if sound can't be played
+    
+    def run(self):
+        self.root.mainloop()
+
+if __name__ == "__main__":
+    quiz = ImpossibleQuiz()
+    quiz.run()
