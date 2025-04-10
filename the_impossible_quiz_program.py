@@ -219,3 +219,16 @@ class ImpossibleQuiz:
         # Set bomb timer for some questions (20% chance)
         if random.random() < 0.2:
             self.start_bomb_timer()
+    
+    def start_bomb_timer(self):
+        self.time_left = random.randint(5, 10)
+        self.update_timer()
+    
+    def update_timer(self):
+        if self.time_left > 0:
+            self.timer_label.config(text=f"⏰ {self.time_left}")
+            self.time_left -= 1
+            self.bomb_timer = self.root.after(1000, self.update_timer)
+        else:
+            self.play_sound('explosion')
+            self.lose_life("Time's up!")
