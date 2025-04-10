@@ -2,6 +2,14 @@
 # The Impossible Quiz Creator
 # April 10, 2025
 
+import tkinter as tk
+from tkinter import ttk, messagebox
+import pygame
+import os
+import webbrowser
+from PIL import Image, ImageTk
+import json
+
 class ImpossibleQuizCreator:
     def __init__(self):
         self.root = tk.Tk()
@@ -73,3 +81,121 @@ class ImpossibleQuizCreator:
         
         # Show quiz creator interface
         self.create_quiz_interface()
+    
+    def create_quiz_interface(self):
+        # Username entry
+        username_frame = tk.Frame(self.quiz_frame, bg=self.colors['baby_power'])
+        username_frame.pack(pady=10)
+        
+        username_label = tk.Label(
+            username_frame,
+            text="Enter your username:",
+            font=('Comica', 12),
+            bg=self.colors['baby_power'],
+            fg=self.colors['lapis_lazuli']
+        )
+        username_label.pack(side='left', padx=5)
+        
+        self.username_entry = tk.Entry(username_frame, font=('Comica', 12))
+        self.username_entry.pack(side='left', padx=5)
+        
+        # Question entry
+        question_frame = tk.Frame(self.quiz_frame, bg=self.colors['baby_power'])
+        question_frame.pack(pady=10)
+        
+        question_label = tk.Label(
+            question_frame,
+            text="Enter your question:",
+            font=('Comica', 12),
+            bg=self.colors['baby_power'],
+            fg=self.colors['lapis_lazuli']
+        )
+        question_label.pack()
+        
+        self.question_entry = tk.Text(question_frame, height=3, width=50, font=('Comica', 12))
+        self.question_entry.pack(pady=5)
+        
+        # Answer choices
+        answers_frame = tk.Frame(self.quiz_frame, bg=self.colors['baby_power'])
+        answers_frame.pack(pady=10)
+        
+        self.answer_entries = {}
+        for choice in ['a', 'b', 'c', 'd']:
+            frame = tk.Frame(answers_frame, bg=self.colors['baby_power'])
+            frame.pack(pady=5)
+            
+            label = tk.Label(
+                frame,
+                text=f"Choice {choice.upper()}:",
+                font=('Comica', 12),
+                bg=self.colors['baby_power'],
+                fg=self.colors['lapis_lazuli']
+            )
+            label.pack(side='left', padx=5)
+            
+            entry = tk.Entry(frame, width=40, font=('Comica', 12))
+            entry.pack(side='left', padx=5)
+            self.answer_entries[choice] = entry
+        
+        # Correct answer selection
+        correct_answer_frame = tk.Frame(self.quiz_frame, bg=self.colors['baby_power'])
+        correct_answer_frame.pack(pady=10)
+        
+        correct_label = tk.Label(
+            correct_answer_frame,
+            text="Select correct answer:",
+            font=('Comica', 12),
+            bg=self.colors['baby_power'],
+            fg=self.colors['lapis_lazuli']
+        )
+        correct_label.pack(side='left', padx=5)
+        
+        self.correct_answer = tk.StringVar()
+        for choice in ['a', 'b', 'c', 'd']:
+            rb = tk.Radiobutton(
+                correct_answer_frame,
+                text=choice.upper(),
+                variable=self.correct_answer,
+                value=choice,
+                font=('Comica', 12),
+                bg=self.colors['baby_power'],
+                fg=self.colors['lapis_lazuli']
+            )
+            rb.pack(side='left', padx=10)
+        
+        # Buttons
+        buttons_frame = tk.Frame(self.quiz_frame, bg=self.colors['baby_power'])
+        buttons_frame.pack(pady=20)
+        
+        # Save button
+        save_button = tk.Button(
+            buttons_frame,
+            text="Save Question",
+            command=self.save_question,
+            font=('Comica', 12),
+            bg=self.colors['school_bus_yellow'],
+            fg=self.colors['raisin_black']
+        )
+        save_button.pack(side='left', padx=10)
+        
+        # Instructions button
+        instructions_button = tk.Button(
+            buttons_frame,
+            text="Instructions",
+            command=self.show_instructions,
+            font=('Comica', 12),
+            bg=self.colors['lapis_lazuli'],
+            fg=self.colors['baby_power']
+        )
+        instructions_button.pack(side='left', padx=10)
+        
+        # GitHub button
+        github_button = tk.Button(
+            buttons_frame,
+            text="ISRAFILMATTER'S GITHUB",
+            command=self.open_github,
+            font=('Comica', 12),
+            bg=self.colors['fire_engine_red'],
+            fg=self.colors['baby_power']
+        )
+        github_button.pack(side='left', padx=10)
