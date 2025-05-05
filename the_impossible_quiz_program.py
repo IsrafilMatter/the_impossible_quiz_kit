@@ -1,4 +1,4 @@
-# Author: Israfil Palabay
+# Author: Israfil Palabay (UI Improvements by v0)
 # The Impossible Quiz
 # April 10, 2025
 
@@ -8,8 +8,9 @@ import pygame
 import os
 import random
 from PIL import Image, ImageTk
+import time
 
-class ImpossibleQuiz:
+class impossible_quiz:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("The Impossible Quiz")
@@ -139,9 +140,6 @@ class ImpossibleQuiz:
         )
         footer_label.pack(side=tk.RIGHT, padx=10, pady=5)
         
-        # Load questions
-        self.load_questions()
-        
     def load_questions(self):
         try:
             with open("quiz_data.txt", "r") as f:
@@ -204,7 +202,7 @@ class ImpossibleQuiz:
         
         # Show first question
         self.show_next_question()
-        
+    
     def create_game_interface(self):
         # Game header with title
         game_header = tk.Frame(self.game_frame, bg=self.colors['primary'], padx=20, pady=10)
@@ -418,8 +416,7 @@ class ImpossibleQuiz:
     
     def show_next_question(self):
         if not self.questions:
-            messagebox.showinfo("Congratulations!", "You've completed all questions!")
-            self.root.quit()
+            self.show_victory_screen()
             return
         
         # Reset timer if it exists
@@ -432,9 +429,18 @@ class ImpossibleQuiz:
         self.current_question = random.choice(self.questions)
         self.questions.remove(self.current_question)
         
-        # Update interface
-        self.question_label.config(text=self.current_question['question'])
+        # Update question number
+        question_num = self.score + 1
+        self.question_number.config(text=f"Question {question_num}")
         
+        # Update interface with animation
+        self.question_label.config(text="")
+        self.root.update()
+        
+        # Typewriter effect for question
+        self.typewriter_effect(self.current_question['question'])
+        
+        # Update answer buttons
         for choice, button in self.answer_buttons.items():
             button.config(text=self.current_question['choices'][choice])
         
@@ -442,13 +448,39 @@ class ImpossibleQuiz:
         if random.random() < 0.2:
             self.start_bomb_timer()
     
+    def typewriter_effect(self, text, delay=30):
+        """Create a typewriter effect for displaying the question"""
+        def type_char(index=0):
+            if index < len(text):
+                current_text = self.question_label.cget("text") + text[index]
+                self.question_label.config(text=current_text)
+                self.root.after(delay, type_char, index + 1)
+        
+        type_char()
+    
     def start_bomb_timer(self):
         self.time_left = random.randint(5, 10)
+        
+        # Show bomb icon
+        self.timer_label.config(text=f"💣 {self.time_left}")
+        
+        # Flash effect for timer
+        self.flash_timer()
+        
+        # Start countdown
         self.update_timer()
+    
+    def flash_timer(self):
+        """Create flashing effect for the timer"""
+        if self.bomb_timer:  # Only flash if timer is active
+            current_fg = self.timer_label.cget("fg")
+            new_fg = self.colors['background'] if current_fg == self.colors['danger'] else self.colors['danger']
+            self.timer_label.config(fg=new_fg)
+            self.root.after(500, self.flash_timer)
     
     def update_timer(self):
         if self.time_left > 0:
-            self.timer_label.config(text=f"⏰ {self.time_left}")
+            self.timer_label.config(text=f"💣 {self.time_left}")
             self.time_left -= 1
             self.bomb_timer = self.root.after(1000, self.update_timer)
         else:
@@ -463,38 +495,242 @@ class ImpossibleQuiz:
         
         if choice.upper() == self.current_question['correct'].upper():
             self.play_sound('ding')
+            
+            # Highlight correct answer
+            self.answer_buttons[choice].config(bg=self.colors['secondary'])
+            self.root.update()
+            self.root.after(500)  # Pause to show correct answer
+            
+            # Update score
+            self.score += 1
+            self.score_display.config(text=f"Score: {self.score}")
+            
+            # Show next question
             self.show_next_question()
         else:
             self.play_sound('explosion')
+            
+            # Highlight wrong answer in red
+            self.answer_buttons[choice].config(bg=self.colors['danger'])
+            
+            # Highlight correct answer in green
+            correct = self.current_question['correct'].upper()
+            self.answer_buttons[correct].config(bg=self.colors['secondary'])
+            
+            self.root.update()
+            self.root.after(1000)  # Pause to show correct/wrong answers
+            
+            # Reset button colors
+            for btn in self.answer_buttons.values():
+                btn.config(bg='white')
+            
             self.lose_life("Wrong answer!")
     
     def lose_life(self, message):
         self.lives -= 1
-        self.lives_label.config(text=f"Lives: {'❤' * self.lives}")
+        
+        # Update heart display
+        if self.lives >= 0:
+            self.heart_labels[self.lives].config(text="💔")
         
         if self.lives <= 0:
-            if messagebox.askyesno("Game Over", f"{message}\nGame Over! Would you like to try again?"):
-                self.reset_game()
-            else:
-                self.root.quit()
+            self.show_game_over(message)
         else:
             messagebox.showinfo("Oops!", f"{message}\nLives remaining: {self.lives}")
     
     def skip_question(self):
         if self.skips > 0:
             self.skips -= 1
-            self.skips_label.config(text=f"Skips: {self.skips}")
+            
+            # Update skip display
+            self.skip_indicators[self.skips].config(text="⏹️")
+            
+            # Cancel any active timer
+            if self.bomb_timer:
+                self.root.after_cancel(self.bomb_timer)
+                self.bomb_timer = None
+                self.timer_label.config(text="")
+            
             self.show_next_question()
         else:
             messagebox.showinfo("No Skips", "You have no skips remaining!")
     
+    def show_game_over(self, message):
+        # Clear game frame
+        for widget in self.game_frame.winfo_children():
+            widget.destroy()
+        
+        # Game over display
+        game_over_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
+        game_over_frame.pack(expand=True, fill='both')
+        
+        # Game over message
+        game_over_label = tk.Label(
+            game_over_frame,
+            text="GAME OVER",
+            font=('Helvetica', 36, 'bold'),
+            bg=self.colors['background'],
+            fg=self.colors['danger']
+        )
+        game_over_label.pack(pady=(100, 20))
+        
+        # Final score
+        score_label = tk.Label(
+            game_over_frame,
+            text=f"Your Score: {self.score}",
+            font=self.heading_font,
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        score_label.pack(pady=10)
+        
+        # Reason
+        reason_label = tk.Label(
+            game_over_frame,
+            text=message,
+            font=self.normal_font,
+            bg=self.colors['background'],
+            fg=self.colors['light_text']
+        )
+        reason_label.pack(pady=10)
+        
+        # Buttons frame
+        buttons_frame = tk.Frame(game_over_frame, bg=self.colors['background'])
+        buttons_frame.pack(pady=30)
+        
+        # Try again button
+        try_again_btn = tk.Button(
+            buttons_frame,
+            text="Try Again",
+            command=self.reset_game,
+            font=self.button_font,
+            bg=self.colors['primary'],
+            fg='white',
+            padx=20,
+            pady=10,
+            borderwidth=0,
+            cursor="hand2"
+        )
+        try_again_btn.pack(side='left', padx=10)
+        
+        # Quit button
+        quit_btn = tk.Button(
+            buttons_frame,
+            text="Quit Game",
+            command=self.root.quit,
+            font=self.button_font,
+            bg=self.colors['danger'],
+            fg='white',
+            padx=20,
+            pady=10,
+            borderwidth=0,
+            cursor="hand2"
+        )
+        quit_btn.pack(side='left', padx=10)
+    
+    def show_victory_screen(self):
+        # Clear game frame
+        for widget in self.game_frame.winfo_children():
+            widget.destroy()
+        
+        # Victory display
+        victory_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
+        victory_frame.pack(expand=True, fill='both')
+        
+        # Victory message
+        victory_label = tk.Label(
+            victory_frame,
+            text="VICTORY!",
+            font=('Helvetica', 36, 'bold'),
+            bg=self.colors['background'],
+            fg=self.colors['secondary']
+        )
+        victory_label.pack(pady=(100, 20))
+        
+        # Congratulations message
+        congrats_label = tk.Label(
+            victory_frame,
+            text="Congratulations! You've completed The Impossible Quiz!",
+            font=self.heading_font,
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        congrats_label.pack(pady=10)
+        
+        # Final score
+        score_label = tk.Label(
+            victory_frame,
+            text=f"Your Final Score: {self.score}",
+            font=self.normal_font,
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        score_label.pack(pady=10)
+        
+        # Lives remaining
+        lives_label = tk.Label(
+            victory_frame,
+            text=f"Lives Remaining: {self.lives}",
+            font=self.normal_font,
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        lives_label.pack(pady=5)
+        
+        # Buttons frame
+        buttons_frame = tk.Frame(victory_frame, bg=self.colors['background'])
+        buttons_frame.pack(pady=30)
+        
+        # Play again button
+        play_again_btn = tk.Button(
+            buttons_frame,
+            text="Play Again",
+            command=self.reset_game,
+            font=self.button_font,
+            bg=self.colors['primary'],
+            fg='white',
+            padx=20,
+            pady=10,
+            borderwidth=0,
+            cursor="hand2"
+        )
+        play_again_btn.pack(side='left', padx=10)
+        
+        # Quit button
+        quit_btn = tk.Button(
+            buttons_frame,
+            text="Quit Game",
+            command=self.root.quit,
+            font=self.button_font,
+            bg=self.colors['accent'],
+            fg='white',
+            padx=20,
+            pady=10,
+            borderwidth=0,
+            cursor="hand2"
+        )
+        quit_btn.pack(side='left', padx=10)
+    
     def reset_game(self):
+        # Reset game state
         self.lives = 3
         self.skips = 3
+        self.score = 0
         self.load_questions()
-        self.lives_label.config(text=f"Lives: {'❤' * self.lives}")
-        self.skips_label.config(text=f"Skips: {self.skips}")
+        
+        # Clear game frame
+        for widget in self.game_frame.winfo_children():
+            widget.destroy()
+        
+        # Recreate game interface
+        self.create_game_interface()
+        
+        # Show first question
         self.show_next_question()
+    
+    def confirm_quit(self):
+        if messagebox.askyesno("Quit Game", "Are you sure you want to quit?"):
+            self.root.quit()
     
     def play_sound(self, sound_name):
         try:
@@ -507,5 +743,5 @@ class ImpossibleQuiz:
         self.root.mainloop()
 
 if __name__ == "__main__":
-    quiz = ImpossibleQuiz()
+    quiz = impossible_quiz()
     quiz.run()
