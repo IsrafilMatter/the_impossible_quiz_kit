@@ -27,6 +27,8 @@ class impossible_quiz:
         self.current_question = None
         self.questions = []
         self.bomb_timer = None
+        self.question_timer = None
+        self.question_time = 30  # Default time for each question
         
         # Colors - Modern color palette
         self.colors = {
@@ -255,18 +257,47 @@ class impossible_quiz:
             heart.pack(side='left', padx=2)
             self.heart_labels.append(heart)
         
-        # Skips with modern styling
+        # Question timer frame (red box area)
+        self.question_timer_frame = tk.Frame(
+            status_frame, 
+            bg=self.colors['danger'],
+            highlightbackground=self.colors['danger'],
+            highlightthickness=2,
+            padx=15,
+            pady=5
+        )
+        self.question_timer_frame.pack(side='left', padx=20, fill='y')
+        
+        self.question_timer_label = tk.Label(
+            self.question_timer_frame,
+            text="Time: 30",
+            font=('Helvetica', 16, 'bold'),
+            bg=self.colors['danger'],
+            fg='white'
+        )
+        self.question_timer_label.pack()
+        
+        # Skips with modern styling and clickable functionality
         skips_frame = tk.Frame(status_frame, bg=self.colors['background'])
         skips_frame.pack(side='right', padx=20)
         
+        # Make "Skips:" text clickable
         skips_label = tk.Label(
             skips_frame,
             text="Skips:",
             font=self.normal_font,
             bg=self.colors['background'],
-            fg=self.colors['text']
+            fg=self.colors['primary'],
+            cursor="hand2"
         )
         skips_label.pack(side='left', padx=(0, 10))
+        
+        # Bind click event to skip_question function
+        skips_label.bind("<Button-1>", lambda e: self.skip_question())
+        
+        # Add hover effect to indicate it's clickable
+        skips_label.bind("<Enter>", lambda e: skips_label.config(fg=self.colors['accent'], underline=True))
+        skips_label.bind("<Leave>", lambda e: skips_label.config(fg=self.colors['primary'], underline=False))
         
         self.skip_indicators = []
         for i in range(3):
@@ -419,11 +450,15 @@ class impossible_quiz:
             self.show_victory_screen()
             return
         
-        # Reset timer if it exists
+        # Reset bomb timer if it exists
         if self.bomb_timer:
             self.root.after_cancel(self.bomb_timer)
             self.bomb_timer = None
             self.timer_label.config(text="")
+        
+        # Reset question timer if it exists
+        if self.question_timer:
+            self.root.after_cancel(self.question_timer)
         
         # Select random question
         self.current_question = random.choice(self.questions)
@@ -444,9 +479,31 @@ class impossible_quiz:
         for choice, button in self.answer_buttons.items():
             button.config(text=self.current_question['choices'][choice])
         
+        # Start question timer
+        self.question_time = 30
+        self.update_question_timer()
+        
         # Set bomb timer for some questions (20% chance)
         if random.random() < 0.2:
             self.start_bomb_timer()
+    
+    def update_question_timer(self):
+        if self.question_time > 0:
+            self.question_timer_label.config(text=f"Time: {self.question_time}")
+            
+            # Change color based on time remaining
+            if self.question_time <= 5:
+                self.question_timer_frame.config(bg=self.colors['danger'])
+                self.question_timer_label.config(bg=self.colors['danger'])
+            elif self.question_time <= 10:
+                self.question_timer_frame.config(bg=self.colors['warning'])
+                self.question_timer_label.config(bg=self.colors['warning'])
+            
+            self.question_time -= 1
+            self.question_timer = self.root.after(1000, self.update_question_timer)
+        else:
+            self.play_sound('explosion')
+            self.lose_life("Time's up!")
     
     def typewriter_effect(self, text, delay=30):
         """Create a typewriter effect for displaying the question"""
@@ -488,10 +545,15 @@ class impossible_quiz:
             self.lose_life("Time's up!")
     
     def check_answer(self, choice):
+        # Cancel timers
         if self.bomb_timer:
             self.root.after_cancel(self.bomb_timer)
             self.bomb_timer = None
             self.timer_label.config(text="")
+        
+        if self.question_timer:
+            self.root.after_cancel(self.question_timer)
+            self.question_timer = None
         
         if choice.upper() == self.current_question['correct'].upper():
             self.play_sound('ding')
@@ -537,6 +599,8 @@ class impossible_quiz:
             self.show_game_over(message)
         else:
             messagebox.showinfo("Oops!", f"{message}\nLives remaining: {self.lives}")
+            # Continue with next question
+            self.show_next_question()
     
     def skip_question(self):
         if self.skips > 0:
@@ -545,11 +609,15 @@ class impossible_quiz:
             # Update skip display
             self.skip_indicators[self.skips].config(text="⏹️")
             
-            # Cancel any active timer
+            # Cancel any active timers
             if self.bomb_timer:
                 self.root.after_cancel(self.bomb_timer)
                 self.bomb_timer = None
                 self.timer_label.config(text="")
+            
+            if self.question_timer:
+                self.root.after_cancel(self.question_timer)
+                self.question_timer = None
             
             self.show_next_question()
         else:
