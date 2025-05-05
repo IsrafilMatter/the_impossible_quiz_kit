@@ -27,6 +27,8 @@ class impossible_quiz:
         self.current_question = None
         self.questions = []
         self.bomb_timer = None
+        self.question_timer = None
+        self.question_time = 30  # Default time for each question
         
         # Colors - Modern color palette
         self.colors = {
@@ -255,18 +257,47 @@ class impossible_quiz:
             heart.pack(side='left', padx=2)
             self.heart_labels.append(heart)
         
-        # Skips with modern styling
+        # Question timer frame (red box area)
+        self.question_timer_frame = tk.Frame(
+            status_frame, 
+            bg=self.colors['danger'],
+            highlightbackground=self.colors['danger'],
+            highlightthickness=2,
+            padx=15,
+            pady=5
+        )
+        self.question_timer_frame.pack(side='left', padx=20, fill='y')
+        
+        self.question_timer_label = tk.Label(
+            self.question_timer_frame,
+            text="Time: 30",
+            font=('Helvetica', 16, 'bold'),
+            bg=self.colors['danger'],
+            fg='white'
+        )
+        self.question_timer_label.pack()
+        
+        # Skips with modern styling and clickable functionality
         skips_frame = tk.Frame(status_frame, bg=self.colors['background'])
         skips_frame.pack(side='right', padx=20)
         
+        # Make "Skips:" text clickable
         skips_label = tk.Label(
             skips_frame,
             text="Skips:",
             font=self.normal_font,
             bg=self.colors['background'],
-            fg=self.colors['text']
+            fg=self.colors['primary'],
+            cursor="hand2"
         )
         skips_label.pack(side='left', padx=(0, 10))
+        
+        # Bind click event to skip_question function
+        skips_label.bind("<Button-1>", lambda e: self.skip_question())
+        
+        # Add hover effect to indicate it's clickable
+        skips_label.bind("<Enter>", lambda e: skips_label.config(fg=self.colors['accent'], underline=True))
+        skips_label.bind("<Leave>", lambda e: skips_label.config(fg=self.colors['primary'], underline=False))
         
         self.skip_indicators = []
         for i in range(3):
@@ -289,19 +320,6 @@ class impossible_quiz:
         )
         self.question_number.pack(pady=(20, 5))
         
-        # Timer display - FIXED: Make timer more prominent
-        self.timer_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
-        self.timer_frame.pack(pady=10)
-        
-        self.timer_label = tk.Label(
-            self.timer_frame,
-            text="⏱️ 15",  # Initialize with 15 seconds
-            font=('Helvetica', 28, 'bold'),  # Larger font
-            bg=self.colors['background'],
-            fg=self.colors['warning']  # Start with warning color
-        )
-        self.timer_label.pack()
-        
         # Question frame with card-like styling
         self.question_card = tk.Frame(
             self.game_frame,
@@ -323,30 +341,6 @@ class impossible_quiz:
             justify='center'
         )
         self.question_label.pack(pady=10)
-        
-        # FIXED: Add skip button right after the question card
-        skip_button_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
-        skip_button_frame.pack(pady=15)
-        
-        # Create a very prominent skip button
-        self.skip_button = tk.Button(
-            skip_button_frame,
-            text="⏭️ SKIP THIS QUESTION (3 LEFT)",
-            command=self.skip_question,
-            font=('Helvetica', 16, 'bold'),
-            bg=self.colors['warning'],
-            fg='white',
-            padx=30,
-            pady=15,
-            borderwidth=2,
-            relief="raised",
-            cursor="hand2"
-        )
-        self.skip_button.pack()
-        
-        # Add hover effect for skip button
-        self.skip_button.bind("<Enter>", lambda e: self.skip_button.config(bg='#D35400'))  # Darker orange on hover
-        self.skip_button.bind("<Leave>", lambda e: self.skip_button.config(bg=self.colors['warning']))
         
         # Answers frame
         self.answers_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
@@ -396,39 +390,75 @@ class impossible_quiz:
             
             self.answer_buttons[choice] = btn
         
-        # Bottom controls frame with modern styling
+        # Bottom controls frame
         controls_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
         controls_frame.pack(pady=20)
+        
+        # Skip button
+        self.skip_button = tk.Button(
+            controls_frame,
+            text="Skip Question",
+            command=self.skip_question,
+            font=self.button_font,
+            bg=self.colors['accent'],
+            fg='white',
+            padx=15,
+            pady=8,
+            borderwidth=0,
+            cursor="hand2"
+        )
+        self.skip_button.pack(side='left', padx=10)
+        
+        # Add hover effect
+        self.skip_button.bind("<Enter>", lambda e: self.skip_button.config(bg='#8E44AD'))
+        self.skip_button.bind("<Leave>", lambda e: self.skip_button.config(bg=self.colors['accent']))
         
         # Quit button
         quit_button = tk.Button(
             controls_frame,
-            text="❌ QUIT GAME",
+            text="Quit Game",
             command=self.confirm_quit,
             font=self.button_font,
             bg=self.colors['danger'],
             fg='white',
-            padx=20,
-            pady=10,
+            padx=15,
+            pady=8,
             borderwidth=0,
-            cursor="hand2",
-            compound='left'
+            cursor="hand2"
         )
-        quit_button.pack(padx=10)
+        quit_button.pack(side='left', padx=10)
         
         # Add hover effect
         quit_button.bind("<Enter>", lambda e: quit_button.config(bg='#C0392B'))
         quit_button.bind("<Leave>", lambda e: quit_button.config(bg=self.colors['danger']))
+        
+        # Timer label (for bomb questions)
+        self.timer_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
+        self.timer_frame.pack(pady=10)
+        
+        self.timer_label = tk.Label(
+            self.timer_frame,
+            text="",
+            font=('Helvetica', 24, 'bold'),
+            bg=self.colors['background'],
+            fg=self.colors['danger']
+        )
+        self.timer_label.pack()
     
     def show_next_question(self):
         if not self.questions:
             self.show_victory_screen()
             return
         
-        # Reset timer if it exists
+        # Reset bomb timer if it exists
         if self.bomb_timer:
             self.root.after_cancel(self.bomb_timer)
             self.bomb_timer = None
+            self.timer_label.config(text="")
+        
+        # Reset question timer if it exists
+        if self.question_timer:
+            self.root.after_cancel(self.question_timer)
         
         # Select random question
         self.current_question = random.choice(self.questions)
@@ -449,26 +479,31 @@ class impossible_quiz:
         for choice, button in self.answer_buttons.items():
             button.config(text=self.current_question['choices'][choice])
         
-        # FIXED: Start 15-second timer for every question
-        self.start_timer(15)
+        # Start question timer
+        self.question_time = 30
+        self.update_question_timer()
         
-        # FIXED: Update skip button text and state
-        self.update_skip_button()
+        # Set bomb timer for some questions (20% chance)
+        if random.random() < 0.2:
+            self.start_bomb_timer()
     
-    # FIXED: New method to update skip button appearance
-    def update_skip_button(self):
-        if self.skips > 0:
-            self.skip_button.config(
-                text=f"⏭️ SKIP THIS QUESTION ({self.skips} LEFT)",
-                state="normal",
-                bg=self.colors['warning']
-            )
+    def update_question_timer(self):
+        if self.question_time > 0:
+            self.question_timer_label.config(text=f"Time: {self.question_time}")
+            
+            # Change color based on time remaining
+            if self.question_time <= 5:
+                self.question_timer_frame.config(bg=self.colors['danger'])
+                self.question_timer_label.config(bg=self.colors['danger'])
+            elif self.question_time <= 10:
+                self.question_timer_frame.config(bg=self.colors['warning'])
+                self.question_timer_label.config(bg=self.colors['warning'])
+            
+            self.question_time -= 1
+            self.question_timer = self.root.after(1000, self.update_question_timer)
         else:
-            self.skip_button.config(
-                text="⏭️ NO SKIPS REMAINING",
-                state="disabled",
-                bg='#95A5A6'  # Gray color
-            )
+            self.play_sound('explosion')
+            self.lose_life("Time's up!")
     
     def typewriter_effect(self, text, delay=30):
         """Create a typewriter effect for displaying the question"""
@@ -480,18 +515,7 @@ class impossible_quiz:
         
         type_char()
     
-    # FIXED: New timer method that works for every question
-    def start_timer(self, seconds):
-        self.time_left = seconds
-        
-        # Show timer with stopwatch icon
-        self.timer_label.config(text=f"⏱️ {self.time_left}", fg=self.colors['warning'])
-        
-        # Start countdown
-        self.update_timer()
-    
     def start_bomb_timer(self):
-        # Legacy method kept for compatibility
         self.time_left = random.randint(5, 10)
         
         # Show bomb icon
@@ -511,20 +535,9 @@ class impossible_quiz:
             self.timer_label.config(fg=new_fg)
             self.root.after(500, self.flash_timer)
     
-    # FIXED: Updated timer method
     def update_timer(self):
         if self.time_left > 0:
-            # Get current icon from label
-            current_text = self.timer_label.cget("text")
-            icon = "⏱️" if "⏱️" in current_text else "💣"
-            
-            # Update timer display
-            self.timer_label.config(text=f"{icon} {self.time_left}")
-            
-            # Change color based on time remaining
-            if self.time_left <= 5:
-                self.timer_label.config(fg=self.colors['danger'])  # Red when time is low
-            
+            self.timer_label.config(text=f"💣 {self.time_left}")
             self.time_left -= 1
             self.bomb_timer = self.root.after(1000, self.update_timer)
         else:
@@ -532,9 +545,15 @@ class impossible_quiz:
             self.lose_life("Time's up!")
     
     def check_answer(self, choice):
+        # Cancel timers
         if self.bomb_timer:
             self.root.after_cancel(self.bomb_timer)
             self.bomb_timer = None
+            self.timer_label.config(text="")
+        
+        if self.question_timer:
+            self.root.after_cancel(self.question_timer)
+            self.question_timer = None
         
         if choice.upper() == self.current_question['correct'].upper():
             self.play_sound('ding')
@@ -580,8 +599,9 @@ class impossible_quiz:
             self.show_game_over(message)
         else:
             messagebox.showinfo("Oops!", f"{message}\nLives remaining: {self.lives}")
+            # Continue with next question
+            self.show_next_question()
     
-    # FIXED: Updated skip question method
     def skip_question(self):
         if self.skips > 0:
             self.skips -= 1
@@ -589,18 +609,16 @@ class impossible_quiz:
             # Update skip display
             self.skip_indicators[self.skips].config(text="⏹️")
             
-            # Cancel any active timer
+            # Cancel any active timers
             if self.bomb_timer:
                 self.root.after_cancel(self.bomb_timer)
                 self.bomb_timer = None
+                self.timer_label.config(text="")
             
-            # Update skip button
-            self.update_skip_button()
+            if self.question_timer:
+                self.root.after_cancel(self.question_timer)
+                self.question_timer = None
             
-            # Show feedback
-            messagebox.showinfo("Question Skipped", f"Moving to next question.\nSkips remaining: {self.skips}")
-            
-            # Show next question
             self.show_next_question()
         else:
             messagebox.showinfo("No Skips", "You have no skips remaining!")
