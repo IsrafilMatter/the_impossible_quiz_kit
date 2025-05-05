@@ -13,7 +13,8 @@ class ImpossibleQuiz:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("The Impossible Quiz")
-        self.root.geometry("800x600")
+        self.root.geometry("900x700")
+        self.root.resizable(False, False)
         
         # Initialize pygame mixer for sound
         pygame.mixer.init()
@@ -21,46 +22,100 @@ class ImpossibleQuiz:
         # Game state
         self.lives = 3
         self.skips = 3
+        self.score = 0
         self.current_question = None
         self.questions = []
         self.bomb_timer = None
         
-        # Colors
+        # Colors - Modern color palette
         self.colors = {
-            'baby_power': '#FDFFFC',
-            'lapis_lazuli': '#235789',
-            'fire_engine_red': '#C1292E',
-            'school_bus_yellow': '#F1D302',
-            'raisin_black': '#161925'
+            'background': '#F5F7FA',
+            'primary': '#3498DB',
+            'secondary': '#2ECC71',
+            'accent': '#9B59B6',
+            'danger': '#E74C3C',
+            'warning': '#F39C12',
+            'text': '#2C3E50',
+            'light_text': '#7F8C8D'
         }
         
         # Configure root window
-        self.root.configure(bg=self.colors['baby_power'])
+        self.root.configure(bg=self.colors['background'])
         
-        # Load start button image
-        start_img = Image.open("begin_interface.jpg")
-        start_img = start_img.resize((200, 100), Image.Resampling.LANCZOS)
-        self.start_photo = ImageTk.PhotoImage(start_img)
+        # Create custom font styles
+        self.title_font = ('Helvetica', 28, 'bold')
+        self.heading_font = ('Helvetica', 18, 'bold')
+        self.normal_font = ('Helvetica', 14)
+        self.button_font = ('Helvetica', 12, 'bold')
         
-        # Create main frame
-        self.main_frame = tk.Frame(self.root, bg=self.colors['baby_power'])
-        self.main_frame.pack(expand=True, fill='both', padx=20, pady=20)
+        # Try to load images or use fallbacks
+        try:
+            # Load start button image
+            start_img = Image.open("begin_interface.jpg")
+            start_img = start_img.resize((300, 150), Image.LANCZOS)
+            self.start_photo = ImageTk.PhotoImage(start_img)
+        except:
+            # Create a fallback button if image not found
+            self.start_photo = None
+        
+        # Create main frame with padding
+        self.main_frame = tk.Frame(self.root, bg=self.colors['background'], padx=30, pady=30)
+        self.main_frame.pack(expand=True, fill='both')
+        
+        # Create title label
+        self.title_label = tk.Label(
+            self.main_frame,
+            text="THE IMPOSSIBLE QUIZ",
+            font=self.title_font,
+            bg=self.colors['background'],
+            fg=self.colors['primary']
+        )
+        self.title_label.pack(pady=(0, 20))
         
         # Center frame for start button
-        self.start_frame = tk.Frame(self.main_frame, bg=self.colors['baby_power'])
+        self.start_frame = tk.Frame(self.main_frame, bg=self.colors['background'])
         self.start_frame.place(relx=0.5, rely=0.5, anchor='center')
         
-        # Start button
-        self.start_button = tk.Button(
-            self.start_frame,
-            image=self.start_photo,
-            command=self.start_game,
-            borderwidth=0
-        )
+        # Start button (with image or text)
+        if self.start_photo:
+            self.start_button = tk.Button(
+                self.start_frame,
+                image=self.start_photo,
+                command=self.start_game,
+                borderwidth=0,
+                cursor="hand2"
+            )
+        else:
+            self.start_button = tk.Button(
+                self.start_frame,
+                text="START GAME",
+                command=self.start_game,
+                font=self.heading_font,
+                bg=self.colors['primary'],
+                fg='white',
+                padx=30,
+                pady=15,
+                borderwidth=0,
+                cursor="hand2"
+            )
+            # Add hover effect
+            self.start_button.bind("<Enter>", lambda e: self.start_button.config(bg=self.colors['accent']))
+            self.start_button.bind("<Leave>", lambda e: self.start_button.config(bg=self.colors['primary']))
+        
         self.start_button.pack()
         
+        # Add subtitle
+        self.subtitle = tk.Label(
+            self.start_frame,
+            text="Are you ready for the challenge?",
+            font=self.normal_font,
+            bg=self.colors['background'],
+            fg=self.colors['light_text']
+        )
+        self.subtitle.pack(pady=20)
+        
         # Create game frame (initially hidden)
-        self.game_frame = tk.Frame(self.main_frame, bg=self.colors['baby_power'])
+        self.game_frame = tk.Frame(self.main_frame, bg=self.colors['background'])
         
         # Load sounds
         self.sound_files = {
@@ -68,6 +123,21 @@ class ImpossibleQuiz:
             'explosion': "explosion_effect_sound_effect.mp3",
             'ding': "ding_sound_effect.mp3"
         }
+        
+        # Load questions
+        self.load_questions()
+        
+        # Add footer
+        footer_frame = tk.Frame(self.root, bg=self.colors['text'], height=30)
+        footer_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        footer_label = tk.Label(
+            footer_frame, 
+            text="© 2025 Israfil Palabay", 
+            fg="white", 
+            bg=self.colors['text'],
+            font=('Helvetica', 10)
+        )
+        footer_label.pack(side=tk.RIGHT, padx=10, pady=5)
         
         # Load questions
         self.load_questions()
