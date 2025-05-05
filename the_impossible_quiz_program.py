@@ -1,6 +1,6 @@
 # Author: Israfil Palabay
 # The Impossible Quiz
-# April 10, 2025
+# May 5, 2025
 
 import tkinter as tk
 from tkinter import ttk, messagebox
