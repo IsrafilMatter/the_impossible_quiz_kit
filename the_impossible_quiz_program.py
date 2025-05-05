@@ -168,15 +168,35 @@ class ImpossibleQuiz:
                     if question:
                         self.questions.append(question)
         except FileNotFoundError:
-            messagebox.showerror("Error", "No questions found! Please create some questions first.")
-            self.root.quit()
+            # Create sample questions if file not found
+            self.questions = [
+                {
+                    'question': 'What is the answer to life, the universe, and everything?',
+                    'choices': {'A': '24', 'B': '42', 'C': '12', 'D': 'Chocolate'},
+                    'correct': 'B'
+                },
+                {
+                    'question': 'Which of these is NOT a fruit?',
+                    'choices': {'A': 'Tomato', 'B': 'Apple', 'C': 'Carrot', 'D': 'Avocado'},
+                    'correct': 'C'
+                },
+                {
+                    'question': 'How many holes does a straw have?',
+                    'choices': {'A': '1', 'B': '2', 'C': '0', 'D': 'Infinite'},
+                    'correct': 'B'
+                }
+            ]
+            messagebox.showinfo("Info", "Using sample questions as quiz_data.txt was not found.")
     
     def start_game(self):
         # Play fart sound
         self.play_sound('fart')
         
-        # Hide start button and show game
-        self.start_button.pack_forget()
+        # Hide start elements
+        self.title_label.pack_forget()
+        self.start_frame.place_forget()
+        
+        # Show game
         self.game_frame.pack(expand=True, fill='both')
         
         # Create game interface
@@ -184,85 +204,217 @@ class ImpossibleQuiz:
         
         # Show first question
         self.show_next_question()
-    
+        
     def create_game_interface(self):
-        # Status frame
-        status_frame = tk.Frame(self.game_frame, bg=self.colors['baby_power'])
-        status_frame.pack(fill='x', pady=10)
+        # Game header with title
+        game_header = tk.Frame(self.game_frame, bg=self.colors['primary'], padx=20, pady=10)
+        game_header.pack(fill='x')
         
-        # Lives
-        self.lives_label = tk.Label(
-            status_frame,
-            text=f"Lives: {'❤' * self.lives}",
-            font=('Comica', 12),
-            bg=self.colors['baby_power'],
-            fg=self.colors['fire_engine_red']
+        header_title = tk.Label(
+            game_header,
+            text="THE IMPOSSIBLE QUIZ",
+            font=self.heading_font,
+            bg=self.colors['primary'],
+            fg='white'
         )
-        self.lives_label.pack(side='left', padx=10)
+        header_title.pack(side='left')
         
-        # Skips
-        self.skips_label = tk.Label(
-            status_frame,
-            text=f"Skips: {self.skips}",
-            font=('Comica', 12),
-            bg=self.colors['baby_power'],
-            fg=self.colors['lapis_lazuli']
+        # Score display
+        self.score_display = tk.Label(
+            game_header,
+            text="Score: 0",
+            font=self.button_font,
+            bg=self.colors['primary'],
+            fg='white'
         )
-        self.skips_label.pack(side='right', padx=10)
+        self.score_display.pack(side='right')
         
-        # Question frame
-        self.question_frame = tk.Frame(self.game_frame, bg=self.colors['baby_power'])
-        self.question_frame.pack(pady=20)
+        # Status frame with modern styling
+        status_frame = tk.Frame(self.game_frame, bg=self.colors['background'], pady=15)
+        status_frame.pack(fill='x')
+        
+        # Lives with heart icons
+        lives_frame = tk.Frame(status_frame, bg=self.colors['background'])
+        lives_frame.pack(side='left', padx=20)
+        
+        lives_label = tk.Label(
+            lives_frame,
+            text="Lives:",
+            font=self.normal_font,
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        lives_label.pack(side='left', padx=(0, 10))
+        
+        self.heart_labels = []
+        for i in range(3):
+            heart = tk.Label(
+                lives_frame,
+                text="❤️",
+                font=('Helvetica', 16),
+                bg=self.colors['background']
+            )
+            heart.pack(side='left', padx=2)
+            self.heart_labels.append(heart)
+        
+        # Skips with modern styling
+        skips_frame = tk.Frame(status_frame, bg=self.colors['background'])
+        skips_frame.pack(side='right', padx=20)
+        
+        skips_label = tk.Label(
+            skips_frame,
+            text="Skips:",
+            font=self.normal_font,
+            bg=self.colors['background'],
+            fg=self.colors['text']
+        )
+        skips_label.pack(side='left', padx=(0, 10))
+        
+        self.skip_indicators = []
+        for i in range(3):
+            skip_ind = tk.Label(
+                skips_frame,
+                text="⏭️",
+                font=('Helvetica', 16),
+                bg=self.colors['background']
+            )
+            skip_ind.pack(side='left', padx=2)
+            self.skip_indicators.append(skip_ind)
+        
+        # Question number
+        self.question_number = tk.Label(
+            self.game_frame,
+            text="Question 1",
+            font=self.heading_font,
+            bg=self.colors['background'],
+            fg=self.colors['accent']
+        )
+        self.question_number.pack(pady=(20, 5))
+        
+        # Question frame with card-like styling
+        self.question_card = tk.Frame(
+            self.game_frame,
+            bg='white',
+            padx=30,
+            pady=20,
+            highlightbackground=self.colors['light_text'],
+            highlightthickness=1
+        )
+        self.question_card.pack(fill='x', padx=40, pady=10)
         
         self.question_label = tk.Label(
-            self.question_frame,
+            self.question_card,
             text="",
-            font=('Comica', 14),
-            bg=self.colors['baby_power'],
-            fg=self.colors['raisin_black'],
-            wraplength=600
+            font=self.normal_font,
+            bg='white',
+            fg=self.colors['text'],
+            wraplength=700,
+            justify='center'
         )
         self.question_label.pack(pady=10)
         
         # Answers frame
-        self.answers_frame = tk.Frame(self.game_frame, bg=self.colors['baby_power'])
+        self.answers_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
         self.answers_frame.pack(pady=20)
         
-        # Create answer buttons
+        # Create answer buttons with modern styling
         self.answer_buttons = {}
-        for choice in ['A', 'B', 'C', 'D']:
-            btn = tk.Button(
-                self.answers_frame,
-                text="",
-                font=('Comica', 12),
-                bg=self.colors['school_bus_yellow'],
-                fg=self.colors['raisin_black'],
-                width=40,
-                command=lambda c=choice: self.check_answer(c)
+        button_colors = [self.colors['primary'], self.colors['secondary'], 
+                         self.colors['accent'], self.colors['warning']]
+        
+        for i, choice in enumerate(['A', 'B', 'C', 'D']):
+            btn_frame = tk.Frame(self.answers_frame, bg=self.colors['background'])
+            btn_frame.pack(pady=8)
+            
+            # Choice letter indicator
+            choice_indicator = tk.Label(
+                btn_frame,
+                text=choice,
+                font=self.button_font,
+                bg=button_colors[i],
+                fg='white',
+                width=2,
+                padx=10
             )
-            btn.pack(pady=5)
+            choice_indicator.pack(side='left')
+            
+            # Answer button
+            btn = tk.Button(
+                btn_frame,
+                text="",
+                font=self.normal_font,
+                bg='white',
+                fg=self.colors['text'],
+                width=50,
+                height=1,
+                anchor='w',
+                padx=15,
+                pady=8,
+                command=lambda c=choice: self.check_answer(c),
+                cursor="hand2"
+            )
+            btn.pack(side='left')
+            
+            # Add hover effect
+            btn.bind("<Enter>", lambda e, b=btn, c=button_colors[i]: b.config(bg=f'#{int(c[1:3], 16):02x}{int(c[3:5], 16):02x}{int(c[5:7], 16):02x}20'))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg='white'))
+            
             self.answer_buttons[choice] = btn
+        
+        # Bottom controls frame
+        controls_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
+        controls_frame.pack(pady=20)
         
         # Skip button
         self.skip_button = tk.Button(
-            self.game_frame,
-            text="Skip",
+            controls_frame,
+            text="Skip Question",
             command=self.skip_question,
-            font=('Comica', 12),
-            bg=self.colors['lapis_lazuli'],
-            fg=self.colors['baby_power']
+            font=self.button_font,
+            bg=self.colors['accent'],
+            fg='white',
+            padx=15,
+            pady=8,
+            borderwidth=0,
+            cursor="hand2"
         )
-        self.skip_button.pack(pady=10)
+        self.skip_button.pack(side='left', padx=10)
+        
+        # Add hover effect
+        self.skip_button.bind("<Enter>", lambda e: self.skip_button.config(bg='#8E44AD'))
+        self.skip_button.bind("<Leave>", lambda e: self.skip_button.config(bg=self.colors['accent']))
+        
+        # Quit button
+        quit_button = tk.Button(
+            controls_frame,
+            text="Quit Game",
+            command=self.confirm_quit,
+            font=self.button_font,
+            bg=self.colors['danger'],
+            fg='white',
+            padx=15,
+            pady=8,
+            borderwidth=0,
+            cursor="hand2"
+        )
+        quit_button.pack(side='left', padx=10)
+        
+        # Add hover effect
+        quit_button.bind("<Enter>", lambda e: quit_button.config(bg='#C0392B'))
+        quit_button.bind("<Leave>", lambda e: quit_button.config(bg=self.colors['danger']))
         
         # Timer label (for bomb questions)
+        self.timer_frame = tk.Frame(self.game_frame, bg=self.colors['background'])
+        self.timer_frame.pack(pady=10)
+        
         self.timer_label = tk.Label(
-            self.game_frame,
+            self.timer_frame,
             text="",
-            font=('Comica', 16, 'bold'),
-            bg=self.colors['baby_power'],
-            fg=self.colors['fire_engine_red']
+            font=('Helvetica', 24, 'bold'),
+            bg=self.colors['background'],
+            fg=self.colors['danger']
         )
-        self.timer_label.pack(pady=5)
+        self.timer_label.pack()
     
     def show_next_question(self):
         if not self.questions:
