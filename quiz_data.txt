@@ -12,3 +12,59 @@ C: Great
 D: All of the above
 ANSWER: d
 ---
+Q: What comes first? The chicken or the egg?
+A: Chicken
+B: Egg
+C: Either
+D: God
+ANSWER: d
+---
+Q: Error Error Error Error Error
+A: Error Error
+B: Error
+C: Error Error Error Error Error
+D: Error Error Error Error
+ANSWER: b
+---
+Q: Why do humans need to sleep?
+A: To recharge our phone battery
+B: So our dreams can give us life advice
+C: To avoid turning into zombies
+D: To meet our pillow friends
+ANSWER: b
+---
+Q: The three Filipino Catholic priests, Mariano G�mez, Jos� Burgos, and Jacinto Zamora, who were executed by the Spanish colonial government in 1872, are collectively known as the ______
+A: MaJoHa
+B: GomBurZa
+C: BurZaGo
+D: ZaGoBur
+ANSWER: b
+---
+Q: Who killed Lapu Lapu?
+A: Died in Battle
+B: You
+C: Never Died
+D: Old Age
+ANSWER: b
+---
+Q: Who build the Mexican Border wall?
+A: Trump
+B: Donald Trump
+C: Americans
+D: Mexicans
+ANSWER: b
+---
+Q: What is made from China?
+A: TikTok
+B: Apple
+C: Samsung
+D: All of the above
+ANSWER: a
+---
+Q: Is the moon landing real?
+A: Yes
+B: Aliens
+C: It was film on a Holywood set
+D: Maybe
+ANSWER: a
+---
