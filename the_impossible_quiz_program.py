@@ -10,7 +10,7 @@ import random
 from PIL import Image, ImageTk
 import time
 
-class impossible_quiz:
+class ImpossibleQuiz:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("The Impossible Quiz")
